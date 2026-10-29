@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <script src="js/main.js" defer></script>
+    <title>MJV Van Transportation</title>
+</head>
+<body>
+    <main class="home1 page-content">
+        <header class="site-header">
+        <button type="button" class="hamburger-menu" aria-label="Toggle navigation" aria-controls="navPills" aria-expanded="false">
+            <span class="line"></span>
+            <span class="line"></span>
+            <span class="line"></span>
+        </button>
+        
+        <nav class="navigation-pill-list" id="navPills" aria-label="Main navigation">
+            <div class="navigation-pill">
+                <a href="inquire.html" class="title">INQUIRE</a>
+            </div>
+            <div class="navigation-pill">
+                <a href="about-us.html" class="title">ABOUT US</a>
+            </div>
+            <div class="navigation-pill">
+                <a href="contact-us.html" class="title">CONTACT US</a>
+            </div>
+            <div class="navigation-pill">
+                <a href="apply-here.html" class="title">APPLY HERE</a>
+            </div>
+        </nav>
+
+        <a href="index.html" class="icon-button">MJV TRANSPORT</a>
+        </header>
+        <section class="page-lead">
+            <p class="eyebrow">AVAILABILITY REQUEST</p>
+            <h1>Plan your trip</h1>
+            <p>Choose a date and share a few details. The driver will confirm availability and pricing.</p>
+        </section>
+        <div class="calendar-form-container99">
+            <!-- Calendar Table -->
+            <div class="calendar">
+                <table>
+                    <caption>October 2024</caption>
+                    <thead>
+                        <tr>
+                            <th>Sun</th>
+                            <th>Mon</th>
+                            <th>Tue</th>
+                            <th>Wed</th>
+                            <th>Thu</th>
+                            <th>Fri</th>
+                            <th>Sat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Example: First row -->
+                        <tr>
+                            <td><a href="#"></a></td>
+                            <td><a href="#"></a></td>
+                            <td><a href="#">1</a></td>
+                            <td><a href="#">2</a></td>
+                            <td><a href="#">3</a></td>
+                            <td><a href="#">4</a></td>
+                            <td><a href="#">5</a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="#">6</a></td>
+                            <td><a href="#">7</a></td>
+                            <td><a href="#">8</a></td>
+                            <td><a href="#">9</a></td>
+                            <td><a href="#">10</a></td>
+                            <td><a href="#">11</a></td>
+                            <td><a href="#">12</a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="#">13</a></td>
+                            <td><a href="#">14</a></td>
+                            <td><a href="#">15</a></td>
+                            <td><a href="#">16</a></td>
+                            <td><a href="#">17</a></td>
+                            <td><a href="#">18</a></td>
+                            <td><a href="#">19</a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="#">20</a></td>
+                            <td><a href="#">21</a></td>
+                            <td><a href="#">22</a></td>
+                            <td><a href="#">23</a></td>
+                            <td><a href="#">24</a></td>
+                            <td><a href="#">25</a></td>
+                            <td><a href="#">26</a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="#">27</a></td>
+                            <td><a href="#">28</a></td>
+                            <td><a href="#">29</a></td>
+                            <td><a href="#">30</a></td>
+                            <td><a href="#">31</a></td>
+                            <td><a href="#"></a></td>
+                            <td><a href="#"></a></td>
+                        </tr>
+                        <!-- Add more rows for the month as needed -->
+                    </tbody>
+                </table>
+            </div>
+        
+            <!-- Scheduling Form -->
+            <div class="schedule-form1">
+                <form method="post" data-api-form="booking">
+                    <div class="form-col">
+                        <label for="vehicle-id">Choose a vehicle</label>
+                        <select id="vehicle-id" name="vehicle_id" required data-vehicle-select>
+                            <option value="">Loading available vehicles…</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="first-name">First name</label>
+                            <input type="text" id="first-name" name="first_name" maxlength="100" autocomplete="given-name" required>
+                        </div>
+                        <div class="form-col">
+                            <label for="last-name">Last name</label>
+                            <input type="text" id="last-name" name="last_name" maxlength="100" autocomplete="family-name" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="from-email">Email</label>
+                            <input type="email" id="from-email" name="email" maxlength="254" autocomplete="email" required>
+                        </div>
+                        <div class="form-col">
+                            <label for="phone">Phone (optional)</label>
+                            <input type="tel" id="phone" name="phone" maxlength="40" autocomplete="tel">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="travel-date">Pickup date</label>
+                            <input type="date" id="travel-date" name="pickup_date" required>
+                        </div>
+                        <div class="form-col">
+                            <label for="time">Pickup time</label>
+                            <input type="time" id="time" name="pickup_time" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="return-date">Return date</label>
+                            <input type="date" id="return-date" name="return_date" required>
+                        </div>
+                        <div class="form-col">
+                            <label for="return-time">Return time</label>
+                            <input type="time" id="return-time" name="return_time" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="pick-location">Pickup location</label>
+                            <input type="text" id="pick-location" name="pickup_location" maxlength="250" required>
+                        </div>
+                        <div class="form-col">
+                            <label for="destination">Destination (optional)</label>
+                            <input type="text" id="destination" name="destination" maxlength="250">
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <label for="passengers">Passengers</label>
+                        <input type="number" id="passengers" name="passengers" min="1" max="100" value="1" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="special-requests">Special requests (optional)</label>
+                        <textarea id="special-requests" name="special_requests" rows="3" maxlength="2000"></textarea>
+                    </div>
+                    <p class="form-status availability-status" role="status" aria-live="polite" data-availability-status></p>
+                    <p class="form-status" role="status" aria-live="polite" data-form-status></p>
+                    <div class="form-col">
+                        <button type="submit">Request this trip</button>
+                        <p class="form-note">Your request is pending until the driver confirms availability and pricing.</p>
+                    </div>
+                </form>
+            </div>
+            
+            
+        </div>
+        <div class="kahon-div">
+            <div class="manong-rentals">Manong Rentals</div>
+            <div class="toyota-hi-ace-van">Toyota Hi-Ace Van</div>
+            <img class="van-preview" src="images/van.png" alt="Toyota HiAce van">
+            <div class="vehicle-capacity"><img src="images/human.png" alt=""><span>12 passengers</span></div>
+        </div>
+
+        <div class="kahon-div-2">
+            <div class="manong-rentals">Harold Rentals</div>
+            <div class="toyota-hi-ace-van">Toyota Hi-Ace Van</div>
+            <img class="van-preview" src="images/van.png" alt="Toyota HiAce van">
+            <div class="vehicle-capacity"><img src="images/human.png" alt=""><span>12 passengers</span></div>
+        </div>
+
+        <div class="kahon-div-3">
+            <div class="manong-rentals">Jarvis Rentals</div>
+            <div class="toyota-hi-ace-van">Toyota Hi-Ace Van</div>
+            <img class="van-preview" src="images/van.png" alt="Toyota HiAce van">
+            <div class="vehicle-capacity"><img src="images/human.png" alt=""><span>12 passengers</span></div>
+        </div>
+    <div class="deal-navigation-buttons">
+        <a href="index.html" class="back-button1">Back</a>
+        <a href="contact-us.html" class="next-button1">Next</a>
+    </div>
+    </main>
+
+    <!-- Footer section -->
+    <footer>
+        <div class="footer-left">
+            <div class="footer-info">
+                <a href="https://www.facebook.com/jansen.manusig" target="_blank" rel="noopener noreferrer">
+                <img class="download-3-icon" alt="facebook Icon" src="images/facebook.png">
+                <div class="charles-jansen">Charles Jansen</div>
+                </a>
+
+                <a href="https://www.instagram.com/8klud/" target="_blank" rel="noopener noreferrer">
+                <img class="download-3-icon" alt="Instagram Icon" src="images/instagram.png">
+                <div class="klud">8klud</div>
+                </a>
+
+                <a href="mailto:Jansen.Manusig@gmail.com">
+                <img class="download-3-icon" alt="gmail Icon" src="images/gmail.png">
+                <div class="jansenmanusiggmailcom">Jansen.Manusig@gmail.com</div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer-center">
+            <div class="charles-jansen-2024">© Charles Jansen 2024</div>
+        </div>
+    </footer>
+</body>
+</html>

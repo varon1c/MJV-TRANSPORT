@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <script src="js/main.js" defer></script>
+    <title>MJV Van Transportation</title>
+</head>
+<body>
+    <main class="home1 page-content">
+        <header class="site-header">
+        <button type="button" class="hamburger-menu" aria-label="Toggle navigation" aria-controls="navPills" aria-expanded="false">
+            <span class="line"></span>
+            <span class="line"></span>
+            <span class="line"></span>
+        </button>
+        
+        <nav class="navigation-pill-list" id="navPills" aria-label="Main navigation">
+            <div class="navigation-pill">
+                <a href="inquire.html" class="title">INQUIRE</a>
+            </div>
+            <div class="navigation-pill">
+                <a href="about-us.html" class="title">ABOUT US</a>
+            </div>
+            <div class="navigation-pill">
+                <a href="contact-us.html" class="title">CONTACT US</a>
+            </div>
+            <div class="navigation-pill">
+                <a href="apply-here.html" class="title">APPLY HERE</a>
+            </div>
+        </nav>
+
+        <a href="index.html" class="icon-button">MJV TRANSPORT</a>
+        </header>
+        
+
+        <h1 class="application-form">Driver application</h1>
+        
+        <!-- Input fields for the application form -->
+        <div class="form-container33">
+            <form method="post" enctype="multipart/form-data" data-api-form="application">
+                <div class="input-group1">
+                    <label for="first-name">First Name</label>
+                    <input type="text" id="first-name" name="first_name" placeholder="Enter your first name" maxlength="100" autocomplete="given-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="birthday">Birthday</label>
+                    <input type="date" id="birthday" name="birthday" required>
+                </div>
+                <div class="input-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender" required>
+                        <option value="" disabled selected>Select your gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="middle-initial">Middle Initial</label>
+                    <input type="text" id="middle-initial" name="middle_initial" placeholder="Enter your middle initial" maxlength="1">
+                </div>
+                <div class="input-group">
+                    <label for="last-name">Last Name</label>
+                    <input type="text" id="last-name" name="last_name" placeholder="Enter your last name" maxlength="100" autocomplete="family-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" maxlength="254" autocomplete="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="phone">Phone (optional)</label>
+                    <input type="tel" id="phone" name="phone" maxlength="40" autocomplete="tel">
+                </div>
+                <div class="input-group">
+                    <label for="position">Position</label>
+                    <input type="text" id="position" name="position" value="Driver" maxlength="120" required>
+                </div>
+                <div class="input-group">
+                    <label for="nationality">Nationality</label>
+                    <input type="text" id="nationality" name="nationality" placeholder="Enter your nationality" maxlength="100" required>
+                </div>
+                <div class="input-group">
+                    <label for="birthplace">Birthplace</label>
+                    <input type="text" id="birthplace" name="birthplace" placeholder="Enter your birthplace" maxlength="150" required>
+                </div>
+                <div class="input-group">
+                    <label for="photo">Upload Photo</label>
+                    <input type="file" id="photo" name="photo" accept=".jpg,.jpeg,.png" required>
+                </div>
+                <div class="input-group">
+                    <label for="ocr-file">OCR File</label>
+                    <input type="file" id="ocr-file" name="ocr-file" accept=".pdf,.jpg,.jpeg,.png" required>
+                </div>
+                <div class="input-group">
+                    <label for="drivers-license">Upload Driver's License</label>
+                    <input type="file" id="drivers-license" name="drivers-license" accept=".pdf,.jpg,.jpeg,.png" required>
+                </div>
+                <div class="input-group message-group">
+                    <label for="application-message">Additional information (optional)</label>
+                    <textarea id="application-message" name="message" rows="4" maxlength="3000"></textarea>
+                </div>
+                <div class="input-group">
+                    <button type="submit">Submit application</button>
+                </div>
+                <p class="form-status" role="status" aria-live="polite" data-form-status></p>
+                <p class="form-note">Documents are submitted privately and can only be accessed by an authenticated administrator.</p>
+            </form>
+            <div class="navigation-buttons">
+                <a href="index.html" class="back-button">Back</a>
+                <a href="inquire.html" class="next-button">Next</a>
+            </div>
+        </div>
+        
+    </main>
+    <!-- Footer section -->
+    <footer>
+        <div class="footer-left">
+            <div class="footer-info">
+                <a href="https://www.facebook.com/jansen.manusig" target="_blank" rel="noopener noreferrer">
+                <img class="download-3-icon" alt="facebook Icon" src="images/facebook.png">
+                <div class="charles-jansen">Charles Jansen</div>
+                </a>
+
+                <a href="https://www.instagram.com/8klud/" target="_blank" rel="noopener noreferrer">
+                <img class="download-3-icon" alt="Instagram Icon" src="images/instagram.png">
+                <div class="klud">8klud</div>
+                </a>
+
+                <a href="mailto:Jansen.Manusig@gmail.com">
+                <img class="download-3-icon" alt="gmail Icon" src="images/gmail.png">
+                <div class="jansenmanusiggmailcom">Jansen.Manusig@gmail.com</div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer-center">
+            <div class="charles-jansen-2024">© Charles Jansen 2024</div>
+        </div>
+    </footer>
+</body>
+</html>
