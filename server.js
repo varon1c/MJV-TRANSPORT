@@ -135,6 +135,33 @@ function requestLimiter(max, windowMs, message) {
     });
 }
 
+function requirePrivacyConsent(value) {
+    if (value !== true && value !== "true") {
+        throw new HttpError(400, "Consent to the privacy notice is required.");
+    }
+}
+
+function staticCacheControl(filePath) {
+    const filename = path.basename(filePath);
+    if (filename === "admin.html") return "private, no-store";
+    if (/(?:^|[.-])[a-f0-9]{8,}(?:[.-]|$)/i.test(filename)) {
+        return "public, max-age=31536000, immutable";
+    }
+    return "no-cache";
+}
+
+function logRequestError(error, req, status) {
+    console.error(JSON.stringify({
+        event: "request.error",
+        request_id: req.requestId,
+        method: req.method,
+        route: req.route?.path || "unmatched",
+        status,
+        error_type: error.name || "Error",
+        error_code: typeof error.code === "string" ? error.code : undefined,
+    }));
+}
+
 function safeFilename(filename) {
     return path.basename(filename).replace(/[^A-Za-z0-9_.-]/g, "_").slice(0, 180) || "document";
 }
@@ -164,7 +191,21 @@ function createApplication() {
     app.disable("x-powered-by");
     const proxyHops = Number.parseInt(process.env.TRUST_PROXY || "0", 10);
     if (Number.isInteger(proxyHops) && proxyHops > 0) app.set("trust proxy", proxyHops);
+    let publicOrigin = null;
+    if (process.env.PUBLIC_ORIGIN) {
+        const configuredUrl = new URL(process.env.PUBLIC_ORIGIN);
+        if (!["http:", "https:"].includes(configuredUrl.protocol)
+            || configuredUrl.pathname !== "/" || configuredUrl.search || configuredUrl.hash) {
+            throw new Error("PUBLIC_ORIGIN must be an HTTP(S) origin without a path.");
+        }
+        publicOrigin = configuredUrl.origin.toLowerCase();
+    }
 
+    app.use((req, res, next) => {
+        req.requestId = crypto.randomUUID();
+        res.setHeader("X-Request-ID", req.requestId);
+        next();
+    });
     app.use(helmet({
         contentSecurityPolicy: {
             directives: {
@@ -183,6 +224,10 @@ function createApplication() {
         crossOriginEmbedderPolicy: false,
     }));
     app.use("/api", (_req, res, next) => {
+        res.setHeader("Cache-Control", "private, no-store");
+        next();
+    });
+    app.use(["/healthz", "/readyz"], (_req, res, next) => {
         res.setHeader("Cache-Control", "no-store");
         next();
     });
@@ -192,7 +237,11 @@ function createApplication() {
         const origin = req.get("origin");
         if (!origin) return next();
         try {
-            if (new URL(origin).host.toLowerCase() !== req.get("host").toLowerCase()) {
+            const requestOrigin = new URL(origin);
+            const allowed = publicOrigin
+                ? requestOrigin.origin.toLowerCase() === publicOrigin
+                : requestOrigin.host.toLowerCase() === req.get("host").toLowerCase();
+            if (!allowed) {
                 throw new HttpError(403, "Request origin is not allowed.");
             }
         } catch (error) {
@@ -210,10 +259,18 @@ function createApplication() {
         limits: { fileSize: MAX_FILE_SIZE, files: 3, fields: 16, parts: 24 },
     }).fields(FILE_FIELDS.map((name) => ({ name, maxCount: 1 })));
 
-    app.get("/api/health", asyncRoute(async (_req, res) => {
-        await pool.query("SELECT 1");
-        res.json({ status: "ok" });
-    }));
+    app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
+    const readinessCheck = asyncRoute(async (req, res) => {
+        try {
+            await pool.query("SELECT 1");
+            res.json({ status: "ok" });
+        } catch (error) {
+            logRequestError(error, req, 503);
+            res.status(503).json({ status: "unavailable" });
+        }
+    });
+    app.get("/readyz", readinessCheck);
+    app.get("/api/health", readinessCheck);
 
     app.get("/api/vehicles", asyncRoute(async (_req, res) => {
         const { rows } = await pool.query(
@@ -244,6 +301,7 @@ function createApplication() {
     }));
 
     app.post("/api/bookings", checkOrigin, publicFormLimiter, asyncRoute(async (req, res) => {
+        requirePrivacyConsent(req.body.privacy_consent);
         const firstName = requiredText(req.body.first_name, "First name", 100);
         const lastName = requiredText(req.body.last_name, "Last name", 100);
         const email = emailAddress(req.body.email);
@@ -300,8 +358,8 @@ function createApplication() {
             const result = await client.query(
                 `INSERT INTO bookings
                 (reference, customer_id, vehicle_id, pickup_at, return_at, pickup_location,
-                 destination, passengers, special_requests)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                 destination, passengers, special_requests, privacy_consent_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
                 RETURNING id, reference, status`,
                 [
                     reference, customer.rows[0].id, vehicleId, pickup, returned,
@@ -320,6 +378,7 @@ function createApplication() {
     }));
 
     app.post("/api/inquiries", checkOrigin, publicFormLimiter, asyncRoute(async (req, res) => {
+        requirePrivacyConsent(req.body.privacy_consent);
         const firstName = requiredText(req.body.first_name, "First name", 100);
         const lastName = requiredText(req.body.last_name, "Last name", 100);
         const email = emailAddress(req.body.email);
@@ -340,8 +399,8 @@ function createApplication() {
                 [`${firstName} ${lastName}`, email, phone],
             );
             const result = await client.query(
-                `INSERT INTO inquiries (customer_id, subject, message)
-                VALUES ($1, $2, $3) RETURNING id, status`,
+                `INSERT INTO inquiries (customer_id, subject, message, privacy_consent_at)
+                VALUES ($1, $2, $3, now()) RETURNING id, status`,
                 [customer.rows[0].id, subject, message],
             );
             await client.query("COMMIT");
@@ -360,6 +419,7 @@ function createApplication() {
             return next();
         });
     }, asyncRoute(async (req, res) => {
+        requirePrivacyConsent(req.body.privacy_consent);
         const first = requiredText(req.body.first_name, "First name", 100);
         const middle = optionalText(req.body.middle_initial, "Middle initial", 1);
         const last = requiredText(req.body.last_name, "Last name", 100);
@@ -405,8 +465,9 @@ function createApplication() {
             }
             const result = await pool.query(
                 `INSERT INTO applications
-                (full_name, email, phone, position, birthday, gender, nationality, birthplace, message, files)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)
+                (full_name, email, phone, position, birthday, gender, nationality, birthplace,
+                 message, files, privacy_consent_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, now())
                 RETURNING id, status`,
                 [
                     [first, middle, last].filter(Boolean).join(" "),
@@ -682,7 +743,10 @@ function createApplication() {
         });
     }));
 
-    app.get("/admin", (_req, res) => res.redirect(302, "/admin.html"));
+    app.get("/admin", (_req, res) => {
+        res.setHeader("Cache-Control", "private, no-store");
+        res.redirect(302, "/admin.html");
+    });
     app.use(["/server.js", "/package.json", "/package-lock.json", "/db", "/scripts", "/src", "/tests", "/node_modules"],
         (_req, res) => res.sendStatus(404));
     app.use(express.static(PUBLIC_DIR, {
@@ -690,12 +754,12 @@ function createApplication() {
         index: "index.html",
         redirect: false,
         setHeaders: (res, filePath) => {
-            if (filePath.endsWith("admin.html")) res.setHeader("Cache-Control", "no-store");
+            res.setHeader("Cache-Control", staticCacheControl(filePath));
         },
     }));
     app.use((_req, res) => res.status(404).send("Not found."));
 
-    app.use((error, _req, res, _next) => {
+    app.use((error, req, res, _next) => {
         if (error instanceof multer.MulterError) {
             const tooLarge = error.code === "LIMIT_FILE_SIZE" || error.code === "LIMIT_FILE_COUNT";
             return res.status(tooLarge ? 413 : 400).json({
@@ -716,7 +780,7 @@ function createApplication() {
         if (error.code === "23503" || error.code === "23514") {
             return res.status(400).json({ error: "The submitted data does not meet the database requirements." });
         }
-        console.error("Request failed:", error.code || error.message);
+        logRequestError(error, req, 500);
         return res.status(500).json({ error: "The request could not be completed." });
     });
     return app;
@@ -741,7 +805,7 @@ function vehicleInput(data) {
     const imagePath = optionalText(data.image_path, "Image path", 250) || "images/van.png";
     if (!/^images\/[A-Za-z0-9_.\-/]+$/.test(imagePath)
         || imagePath.split("/").includes("..")
-        || !fs.existsSync(path.resolve(ROOT, imagePath))) {
+        || !fs.existsSync(path.resolve(PUBLIC_DIR, imagePath))) {
         throw new HttpError(400, "Choose an existing image inside the images folder.");
     }
     const availability = data.availability_status || "available";
@@ -800,13 +864,17 @@ async function startServer() {
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("PORT must be a valid TCP port.");
     const app = createApplication();
     return app.listen(port, host, () => {
-        console.log(`MJV Transport listening at http://${host}:${port}`);
+        console.log(JSON.stringify({ event: "server.listening", host, port }));
     });
 }
 
 if (require.main === module) {
     startServer().catch((error) => {
-        console.error("Could not start MJV Transport:", error.message);
+        console.error(JSON.stringify({
+            event: "server.startup_error",
+            error_type: error.name || "Error",
+            error_code: typeof error.code === "string" ? error.code : undefined,
+        }));
         process.exitCode = 1;
     });
 }
@@ -818,6 +886,7 @@ module.exports = {
     passwordHash,
     positiveId,
     requiredText,
+    staticCacheControl,
     startServer,
     verifyPassword,
 };

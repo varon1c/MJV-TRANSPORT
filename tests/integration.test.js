@@ -84,10 +84,25 @@ test("PostgreSQL form, booking, upload, and admin workflows", { skip: !testDatab
             subject: "Database test", message: "A test inquiry.",
         }),
     });
-    assert.equal(inquiryResponse.status, 201);
-    const inquiry = await inquiryResponse.json();
+    assert.equal(inquiryResponse.status, 400);
+    assert.match((await inquiryResponse.json()).error, /consent/i);
+    const acceptedInquiryResponse = await fetch(`${base}/api/inquiries`, {
+        method: "POST",
+        headers: { ...origin, "Content-Type": "application/json" },
+        body: JSON.stringify({
+            first_name: "Integration", last_name: "Test", email, phone: "",
+            subject: "Database test", message: "A test inquiry.", privacy_consent: true,
+        }),
+    });
+    assert.equal(acceptedInquiryResponse.status, 201);
+    const inquiry = await acceptedInquiryResponse.json();
     created.inquiryId = inquiry.inquiry_id;
     assert.equal(inquiry.status, "new");
+    const inquiryConsent = await pool.query(
+        "SELECT privacy_consent_at IS NOT NULL AS recorded FROM inquiries WHERE id = $1",
+        [created.inquiryId],
+    );
+    assert.equal(inquiryConsent.rows[0].recorded, true);
 
     const future = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
     const pickupDate = new Intl.DateTimeFormat("en-CA", {
@@ -100,19 +115,27 @@ test("PostgreSQL form, booking, upload, and admin workflows", { skip: !testDatab
         first_name: "Integration", last_name: "Test", email,
         vehicle_id: String(vehicleId), pickup_date: pickupDate, pickup_time: "09:00",
         return_date: returnDate, return_time: "18:00", pickup_location: "Porac",
-        destination: "Clark", passengers: "3", special_requests: "",
+        destination: "Clark", passengers: "3", special_requests: "", privacy_consent: true,
     };
-    const submitBooking = () => fetch(`${base}/api/bookings`, {
+    const submitBooking = (consent = true) => fetch(`${base}/api/bookings`, {
         method: "POST",
         headers: { ...origin, "Content-Type": "application/json" },
-        body: JSON.stringify(bookingBody),
+        body: JSON.stringify(consent ? bookingBody : Object.fromEntries(
+            Object.entries(bookingBody).filter(([key]) => key !== "privacy_consent"),
+        )),
     });
+    assert.equal((await submitBooking(false)).status, 400);
     const firstBookingResponse = await submitBooking();
     assert.equal(firstBookingResponse.status, 201);
     const firstBooking = await firstBookingResponse.json();
     created.bookingIds.push(firstBooking.id);
     assert.match(firstBooking.reference, /^MJV-[A-F0-9]{10}$/);
     assert.equal(firstBooking.status, "pending");
+    const bookingConsent = await pool.query(
+        "SELECT privacy_consent_at IS NOT NULL AS recorded FROM bookings WHERE id = $1",
+        [firstBooking.id],
+    );
+    assert.equal(bookingConsent.rows[0].recorded, true);
     const customer = await pool.query("SELECT id FROM customers WHERE email = $1", [email]);
     created.customerId = customer.rows[0].id;
 
@@ -150,8 +173,9 @@ test("PostgreSQL form, booking, upload, and admin workflows", { skip: !testDatab
         },
         body: JSON.stringify(vehiclePayload),
     });
-    assert.equal(createVehicle.status, 201);
-    created.adminVehicleId = (await createVehicle.json()).vehicle_id;
+    const createVehicleBody = await createVehicle.text();
+    assert.equal(createVehicle.status, 201, createVehicleBody);
+    created.adminVehicleId = JSON.parse(createVehicleBody).vehicle_id;
     const deactivateVehicle = await fetch(`${base}/api/admin/vehicles/${created.adminVehicleId}`, {
         method: "PUT",
         headers: {
@@ -210,27 +234,38 @@ test("PostgreSQL form, booking, upload, and admin workflows", { skip: !testDatab
     const conflictingRequest = await submitBooking();
     assert.equal(conflictingRequest.status, 409);
 
-    const applicationForm = new FormData();
-    for (const [key, value] of Object.entries({
-        first_name: "Applicant", middle_initial: "T", last_name: "Example", email,
-        phone: "", position: "Driver", birthday: "1990-01-02", gender: "other",
-        nationality: "Filipino", birthplace: "Pampanga", message: "",
-    })) applicationForm.set(key, value);
-    applicationForm.set("photo", new Blob([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])], {
-        type: "image/png",
-    }), "portrait.png");
-    applicationForm.set("ocr-file", new Blob(["%PDF-1.4\n"], { type: "application/pdf" }), "identity.pdf");
-    applicationForm.set("drivers-license", new Blob(["%PDF-1.4\n"], {
-        type: "application/pdf",
-    }), "license.pdf");
+    const makeApplicationForm = (consent = true) => {
+        const form = new FormData();
+        for (const [key, value] of Object.entries({
+            first_name: "Applicant", middle_initial: "T", last_name: "Example", email,
+            phone: "", position: "Driver", birthday: "1990-01-02", gender: "other",
+            nationality: "Filipino", birthplace: "Pampanga", message: "",
+        })) form.set(key, value);
+        if (consent) form.set("privacy_consent", "true");
+        form.set("photo", new Blob([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])], {
+            type: "image/png",
+        }), "portrait.png");
+        form.set("ocr-file", new Blob(["%PDF-1.4\n"], { type: "application/pdf" }), "identity.pdf");
+        form.set("drivers-license", new Blob(["%PDF-1.4\n"], {
+            type: "application/pdf",
+        }), "license.pdf");
+        return form;
+    };
+    const missingConsent = await fetch(`${base}/api/applications`, {
+        method: "POST", headers: origin, body: makeApplicationForm(false),
+    });
+    assert.equal(missingConsent.status, 400);
     const applicationResponse = await fetch(`${base}/api/applications`, {
-        method: "POST",
-        headers: origin,
-        body: applicationForm,
+        method: "POST", headers: origin, body: makeApplicationForm(),
     });
     assert.equal(applicationResponse.status, 201);
     const application = await applicationResponse.json();
     created.applicationId = application.application_id;
+    const applicationConsent = await pool.query(
+        "SELECT privacy_consent_at IS NOT NULL AS recorded FROM applications WHERE id = $1",
+        [created.applicationId],
+    );
+    assert.equal(applicationConsent.rows[0].recorded, true);
 
     const inquiryUpdate = await fetch(`${base}/api/admin/inquiries/${created.inquiryId}`, {
         method: "PATCH",

@@ -15,7 +15,10 @@ const pool = new Pool({
 });
 
 pool.on("error", (error) => {
-    console.error("Unexpected PostgreSQL pool error:", error.code || error.message);
+    console.error(JSON.stringify({
+        event: "database.pool_error",
+        error_code: typeof error.code === "string" ? error.code : undefined,
+    }));
 });
 
 module.exports = { pool };
